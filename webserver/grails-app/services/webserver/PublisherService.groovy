@@ -8,192 +8,169 @@ class PublisherService {
 
 	def restApiService
 
-	def publishItem(token, prod, listing) {
+	def defineAction(meliUser, prod, listing) {
 
-		if(prod && token && listing) {
+		println "prod"
+
+		if (!prod.items.itemId) {
+			publishItem(meliUser, prod, listing)
+		}
+
+		else if(prod.items.status == "active" || prod.items.status == "paused") {
+
+			modifyItem(meliUser, prod, listing)
+		}
+	}
+
+	def publishItem(meliUser, prod, listing) {
+
+		if(prod.stock > 0 && meliUser.token && listing) {
 
 			def bodyContent
-			def categoryId = selectCategory(prod)
-			def modeShipping = checkShipping(categoryId)
+			def categoryId
+			def modeShipping
+			def map = selectCategory(prod)
 
-			if (prod.stock > 0) {
+			if (map) {
+				categoryId = map.category
+				modeShipping = map.shipMode
+			}
 
-				if (listing == "gold_special") {
+			def shipping = createShipping(modeShipping)
 
-					def images = [
-						["source" : prod.image1],
-						["source" : prod.image2],
-						["source" : prod.image3],
-						["source" : prod.image4],
-						["source" : prod.image5],
-						["source" : prod.image6]
-					]
+			def images = [
+				["source" : prod.image1],
+				["source" : prod.image2],
+				["source" : prod.image3],
+				["source" : prod.image4],
+				["source" : prod.image5],
+				["source" : prod.image6]
+			]
 
-					bodyContent = [
-						"title": "Test - "+prod.title.toString(),
-						"category_id": categoryId.toString(),
-						"price": prod.price.toFloat(),
-						"currency_id": prod.currency.toString(),
-						"available_quantity": prod.stock,
-						"buying_mode": "buy_it_now",
-						"listing_type_id": listing,
-						"condition": "new",
-						"description": prod.description,
-						"pictures": images,
-						"warranty": prod.warranty.toString(),
-						//"accepts_mercadopago": true,
-						//"non_mercado_pago_payment_methods": [["id": "MLAWC"]],
-						//"shipping": "not_specified"
-					]
+			bodyContent = [
+				"title": "Test - "+prod.title.toString(),
+				"category_id": categoryId.toString(),
+				"price": prod.price.toFloat(),
+				"currency_id": prod.currency.toString(),
+				"available_quantity": prod.stock,
+				"buying_mode": "buy_it_now",
+				"listing_type_id": listing,
+				"condition": "new",
+				"description": prod.description,
+				"pictures": images,
+				"warranty": prod.warranty.toString(),
+				"accepts_mercadopago": true,
+				"non_mercado_pago_payment_methods": [["id": "MLAWC"]],
+				"shipping": shipping,
+				"seller_custom_field":prod.sku
+			]
 
-					def url = "/items"
-					println bodyContent as JSON
-
-					def result = restApiService.post(url , [access_token:token], bodyContent)
-
-//					item.itemId = result.id
-//					item.status = result.status
-//					item.permalink = result.permalink
-//					item.save()
-				}
+			try {
+				def url = "/items"
+				def result = restApiService.post(url , [access_token:meliUser.token], bodyContent)
+				createItem(meliUser, result)
+			}
+			catch(e) {
+				println "Exception trying to publish an item {$e}"
 			}
 		}
 	}
 
-	//	   else {
-	//		   if (item.shipping == 'me2') {
-	//
-	//
-	//				   modeShipping = ["mode": "me2",
-	//								   "local_pick_up": false
-	//								   ]
-	//
-	//				   }
-	//
-	//			   else if (item.shipping == 'custom') {
-	//
-	//				   modeShipping =	["mode": "custom",
-	//					   "local_pick_up": false,
-	//					   "free_shipping": false,
-	//					   "methods": [],
-	//					   "costs": [["description": "TEST1","cost": "70"],["description": "TEST2 ","cost": "80"]]
-	//					   ]
-	//
-	//				   }
-	//
-	//				   else { modeShipping = "not_specified" }
-	//
-	//
-	//				   def images = [
-	//						   ["source" : item.product.imagen1],
-	//						   ["source" : item.product.imagen2],
-	//						   ["source" : item.product.imagen3],
-	//						   ["source" : item.product.imagen4],
-	//						   ["source" : item.product.imagen5],
-	//						   ["source" : item.product.imagen6]
-	//					   ]
-	//
-	//	   bodyContent = [
-	//		   "title": "Test - "+item.product.titulo.toString(),
-	//		   "category_id": item.categoryId.toString(),
-	//		   "price": item.product.precio.toFloat(),
-	//		   "currency_id": "ARS",
-	//		   "available_quantity": item.product.stock,
-	//		   "buying_mode": "buy_it_now",
-	//		   "listing_type_id": item.listingType,
-	//		   "condition": "new",
-	//		   "description": item.product.descripcion,
-	//		   "pictures": images,
-	//		   "warranty": item.product.garantia.toString(),
-	//		   "accepts_mercadopago": true,
-	//		   "non_mercado_pago_payment_methods": [["id": "MLAWC"]],
-	//		   "shipping": modeShipping
-	//
-	//
-	//	   ]
-	//
-	//	   }
-	//		   println bodyContent as JSON
-	//
-	//			   def result = RestApiService.post("/items?access_token="+token, bodyContent)
-	//			   item.itemId = result.data.id
-	//			   item.status = result.data.status
-	//			   item.permalink = result.data.permalink
-	//			   item.save()
-	//		   }
-	//	   }
-	//
-	//	   else {
-	//
-	//	   if(item.status == "active" || item.status == "paused") {
-	//
-	//		   def itemAPI = RestApiService.getData("/items/"+item.itemId)
-	//
-	//		   if (itemAPI.data.sold_quantity == 0) {
-	//
-	//			   def images = [
-	//				   ["source" : item.product.imagen1],
-	//				   ["source" : item.product.imagen2],
-	//				   ["source" : item.product.imagen3],
-	//				   ["source" : item.product.imagen4],
-	//				   ["source" : item.product.imagen5],
-	//				   ["source" : item.product.imagen6]
-	//			   ]
-	//
-	//			   bodyContent = [
-	//				   "title": "Test - "+item.product.titulo.toString(),
-	//				   "price": item.product.precio.toFloat(),
-	//				   "available_quantity": item.product.stock,
-	//				   "pictures": images,
-	//				   "warranty": item.product.garantia.toString(),
-	//			   ]
-	//
-	//			   println bodyContent as JSON
-	//
-	//			   def result = RestApiService.put("/items/"+item.itemId+"?access_token="+token, bodyContent)
-	//			   item.permalink = result.data.permalink
-	//			   item.save()
-	//
-	//			   }
-	//
-	//			   else {
-	//				   def images = [
-	//					   ["source" : item.product.imagen1],
-	//					   ["source" : item.product.imagen2],
-	//					   ["source" : item.product.imagen3],
-	//					   ["source" : item.product.imagen4],
-	//					   ["source" : item.product.imagen5],
-	//					   ["source" : item.product.imagen6]
-	//				   ]
-	//
-	//				   bodyContent = [
-	//					   "price": item.product.precio.toFloat(),
-	//					   "available_quantity": item.product.stock,
-	//					   "pictures": images,
-	//				   ]
-	//
-	//				   println bodyContent as JSON
-	//
-	//				   def result = RestApiService.put("/items/"+item.itemId+"?access_token="+token, bodyContent)
-	//				   item.permalink = result.data.permalink
-	//				   item.save()
-	//
-	//
-	//			   }
-	//		   }
-	//	   }
-	//
-	//   }
+	def modifyItem(meliUser, prod, listing) {
 
+		try {
 
-	def checkShipping(categoryId) {
+			def item = RestApiService.getData("/items/"+prod.items.itemId)
 
-		return "not_specified"
+			def images = [
+				["source" : prod.image1],
+				["source" : prod.image2],
+				["source" : prod.image3],
+				["source" : prod.image4],
+				["source" : prod.image5],
+				["source" : prod.image6]
+			]
+
+			if (item.sold_quantity == 0) {
+
+				bodyContent = [
+					"title": prod.title.toString(),
+					"price": prod.price.toFloat(),
+					"available_quantity": prod.stock,
+					"pictures": images,
+					"warranty": prod.warranty.toString(),
+				]
+			}
+			else {
+				bodyContent = [
+					"price": prod.price.toFloat(),
+					"available_quantity": prod.stock,
+					"pictures": images,
+				]
+			}
+
+		def parameters = [access_token : meliUser.token]
+		def url = "/items/"+item.id
+		def result = restApiService.put(url, parameters, bodyContent)
+
+		}
+		catch(e) {
+			println e
+		}
+	}
+
+	def createShipping(modeShipping) {
+
+		def shipping
+
+		switch (modeShipping) {
+			case "me2":
+				shipping = ["mode": "me2",
+					"local_pick_up": false
+				]
+
+				break
+			case "custom":
+				shipping =	["mode": "custom",
+					"local_pick_up": false,
+					"free_shipping": false,
+					"methods": [],
+					"costs": [
+						["description": "TEST1","cost": "70"],
+						["description": "TEST2 ","cost": "80"]]
+				]
+
+				break
+			default:
+				shipping = "not_specified"
+				break
+		}
+
+		return shipping
 	}
 
 	def selectCategory(prod) {
+		def mapCategory
+		try {
 
-		return "MLA9975"
+			def shipping
+			def url = "/sites/MLA/category_predictor/predict"
+			def parameters = [title: prod.title, price: prod.price]
+			def cat = restApiService.get(url, parameters)
+
+			if (cat.shipping_modes.contains("me2")){
+				shipping = "me2"
+			}
+			else {
+				shipping = "custom"
+			}
+
+			mapCategory = [category: cat.id, shipMode: shipping]
+		}
+		catch(e){
+			println e
+		}
+		return mapCategory
 	}
 
 	def checkListingType(custId, token) {
@@ -211,6 +188,20 @@ class PublisherService {
 		return availableListings
 	}
 
+	def createItem(meliUser, item) {
+
+		try {
+			Products p = Products.findBySku(item.seller_custom_field)
+			if (p) {
+				Items i = new Items(categoryId: item.category_id, itemId: item.id, listingType: item.listing_type_id, meliUser:meliUser, permalink: item.permalink, product:p, shipping: item.shipping.mode, status: item.status)
+				i.save(flush:true, failOnError:true)
+			}
+		}
+		catch(e){
+			println "Exception trying to save in DB new item {$e}"
+		}
+	}
+
 	def updateItems(meliUser) {
 
 		/* get all items by seller*/		
@@ -226,16 +217,7 @@ class PublisherService {
 
 			/*if item not exists, create it*/
 			if (!item) {
-
-				meliItem.seller_custom_field = "AAA222"
-				Products p = Products.findBySku(meliItem.seller_custom_field)
-				//Products p = Products.get(1)
-				
-				if (p) {
-				Items i = new Items(categoryId:meliItem.category_id, itemId:meliItem.id, listingType:meliItem.listing_type_id, meliUser:meliUser, permalink:meliItem.permalink, product:p, shipping:meliItem.shipping.mode, status:meliItem.status )
-				i.save(flush:true, failOnError:true)
-				}
-
+				createItem(meliUser, meliItem)
 			}
 			/*if item exists, update it*/
 			else {

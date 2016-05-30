@@ -29,15 +29,16 @@ form, button {
 
 <body>
 <div id= optionsMenu>
-<form action="/home/configuration">
+<g:form controller= "home" action="configuration">
     <button type="submit">Configuration</button>
-</form>
-<form action="/product/mapping">
+</g:form>
+<g:form controller= "product" action="list">
     <button type="submit">My Products</button>
-</form>
-<form action="/questions/list">
+</g:form>
+<g:form controller= "question" action="list">
     <button type="submit">My Questions</button>
-</form>
+</g:form>
+
 
 </div>
 	<br>

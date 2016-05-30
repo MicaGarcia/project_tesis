@@ -10,7 +10,7 @@ class PublisherController {
 		MeliUsers meliUser = MeliUsers.findByUser(session.user)
 		Products prod = Products.get(params.productId)
 		
-		def result = publisherService.publishItem(meliUser.token, prod, params.listing)
+		def result = publisherService.defineAction(meliUser, prod, params.listing)
 		
 		redirect(controller: "product", action: "list")
 		

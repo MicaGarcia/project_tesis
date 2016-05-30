@@ -20,14 +20,36 @@ thead {
 td {
 	height: 10px;
 }
+
+form,button {
+	text-decoration: none;
+	font: menu;
+	color: ButtonText;
+	display: inline-block;
+	padding: 2px 8px;
+}
 </style>
 
 </head>
 <body>
-	<a href="create">New Product</a>
+
+	<div id=optionsMenu>
+		<g:form controller="home" action="configuration">
+			<button type="submit">Configuration</button>
+		</g:form>
+		<g:form controller="question" action="list">
+			<button type="submit">My Questions</button>
+		</g:form>
+		<g:form controller="order" action="list">
+			<button type="submit">My Orders</button>
+		</g:form>
+
+	</div>
 	<br>
-	<br>
-	<br>
+	<g:form action="create">
+		<button type="submit">New Product</button>
+	</g:form>
+	<br><br>
 	<div>
 		<table border="1" cellspacing="5" cellpadding="5">
 			<thead>
@@ -64,8 +86,7 @@ td {
 						<g:form controller="publisher" action="publish">
 							<td><g:select id="listing" name="listing"
 									from="${listingType}" value="" /></td>
-							<td><a href="${product.items.permalink.find{true}}">
-									${product.items.itemId.find{true}}
+							<td><a href="${product.items.permalink.find{true}}"> ${product.items.itemId.find{true}}
 							</a></td>
 							<td>
 								${product.items.categoryId.find{true}}
@@ -78,7 +99,8 @@ td {
 							</td>
 
 							<g:hiddenField name="productId" value="${product.id}" />
-							<g:hiddenField name="itemId" value="${product.items.id.find{true}}" />
+							<g:hiddenField name="itemId"
+								value="${product.items.id.find{true}}" />
 							<g:if
 								test="${product.items.status.find{true} == 'active' || product.items.status.find{true} == 'paused'}">
 								<td><g:submitButton name="save" value="Modificar" /></td>

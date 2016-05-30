@@ -43,9 +43,6 @@ class ProductService {
 			//				imagen.transferTo(new File(imageDir,imagen.originalFilename))
 			//			}
 			//product.picture = imagen?.originalFilename ?: "noimage.jpg"
-
-			product.currency = "ARS"
-			product.warranty = "Garantia de Test"
 			product.userId = user.id
 			product.image1 = "http://mla-s1-p.mlstatic.com/822711-MLA20604428947_022016-F.jpg"
 			product.image2 = "http://mla-s1-p.mlstatic.com/822711-MLA20604428947_022016-F.jpg"
@@ -65,7 +62,35 @@ class ProductService {
 		return result
 	}
 
-	def update() {
+	def update(params) {
+		
+		println params.stock
+		def error
+		def result = true	
+		try {
+
+			Products p = Products.get(params.id)
+			p.sku = params.sku
+			p.title = params.title
+			p.price = Double.parseDouble(params.price)
+			p.currency = params.currency
+			p.stock = Integer.parseInt(params.stock)
+			p.description = params.description
+			p.warranty = params.warranty
+			p.save()
+			
+			if (!p.save()) {
+				p.errors.allErrors.each { println it }
+				result = false
+			}
+			
+		}
+		catch(Exception e) {
+			error = "There was an error updating meli user - {$e}"
+			println "There was an error updating meli user - {$e}"
+			result = false
+		}
+		return result		
 	}
 
 	def delete(productId) {

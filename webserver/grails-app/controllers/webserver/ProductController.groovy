@@ -24,12 +24,12 @@ class ProductController {
 
 		def listProducts = productService.getAllProducts(session.user.id)
 		def listingType = selectListing()
-		
+
 		render(view:"list", model:[listProducts: listProducts, listingType:listingType])
 	}
 
 	def details() {
-		Products product = productService.getById(params.id)		
+		Products product = productService.getById(params.id)
 		render(view:"details", model:[product: product])
 	}
 
@@ -51,46 +51,63 @@ class ProductController {
 			render(view: "create")
 		}
 	}
-	
-	def deleteProduct() {		
+
+	def deleteProduct() {
 		def result = productService.delete(params.id)
 		redirect(action:"list")
 	}
 
-//	def edit(productId) {
-//
-//		def product = Products.get(productId)
-//		if (!product) {
-//			redirect(action: "list")
-//			return
-//		}
-//		[productInstance: product]
-//	}
-//
-//	def updateProduct(productId) {
-//		def result = productService.update(productId)
-//	}
+	def edit() {
 
-
-	
-	def selectListing() {
+		def product = Products.get(params.id)
 		
+		if (!product) {
+			redirect(action: "list")
+			return
+		}
+		[product: product]
+	}
+
+
+	def updateProduct() {
+
+		try {
+			def result = productService.update(params)
+			println params.id
+
+			if (result) {
+				flash.message = "Integrator updated"
+				redirect (action: "details", id: params.id)
+			}
+			else {
+				flash.message = "Error updating integrator_id ${params.id}"
+				redirect (action: "edit", id: params.id)
+			}
+		}
+		catch(e){
+			println e
+			redirect(action: "details", id: params.id)
+		}
+	}
+
+
+
+	def selectListing() {
+
 		MeliUsers meliUser = MeliUsers.findByUser(session.user)
 		def custId = meliUser.custId
 		def token = meliUser.token
-		
+
 		def availableListings = publisherService.checkListingType(custId, token)
-		
 	}
-	
+
 	def updateList() {
 		MeliUsers meliUser = MeliUsers.findByUser(session.user)
 		def res = publisherService.updateItems(meliUser)
-		
+
 		def listProducts = productService.getAllProducts(session.user.id)
 		def listingType = selectListing()
-		
+
 		render(view:"list", model:[listProducts: listProducts, listingType:listingType])
-		
 	}
 }

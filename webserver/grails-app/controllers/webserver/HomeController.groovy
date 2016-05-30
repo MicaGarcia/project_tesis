@@ -41,15 +41,12 @@ class HomeController {
 
 		try {
 			def user = Users.findByUsernameAndPassword(username, password)
-			println user
 
 			if (user) {
 				session.user = user
 				session.setMaxInactiveInterval(3600)
 				session.meliUser = usersService.getMeliUser(session.user.id)
-
 				//				if(session.meliUser) {
-				//
 				//					refreshToken(session.meliUser)
 				//				}
 				redirect (action:"configuration")
@@ -78,12 +75,8 @@ class HomeController {
 
 		try {
 
-			println "SESSION MELIUSER "+session.meliUser
-			println "SESSION USER "+session.user
-
 			def userLogged
-			//def meliUser = usersService.getMeliUser(session.user.id)
-
+			
 			if (!session.meliUser) {
 
 				def sessionToken = session.token
@@ -112,21 +105,25 @@ class HomeController {
 			}
 			else {
 
-				def token = session.meliUser.token
-				def refreshToken = session.meliUser.refreshToken
-				def meliCustId = session.meliUser.custId
-
-				//usersService.updateMeliUser(session.user.id, sessionToken, sessionRefresh, sessionMeliId)
-
-				userLogged = usersService.getDataLogged(token)
+				if (session.token) {					
+					usersService.updateMeliUser(session.user.id, session.token, session.refreshToken, session.meliCustId)
+					session.meliUser = usersService.getMeliUser(session.user.id)
+				}
+				
+				userLogged = usersService.getDataLogged(session.meliUser.token)
+				
+				if (userLogged) {
 				def listShipping = []
 				listShipping = userLogged.shipping_modes
 				render(view: "configuration", model: [userLogged: userLogged, listShipping:listShipping])
-
-			}
+				}
+				
+				else {
+					render(view: "configuration")
+					}
+				}
 		}
 		catch (e) {
-			println e
 			redirect (action:"login")
 		}
 	}
@@ -134,7 +131,6 @@ class HomeController {
 	def authenticate() {
 		def error
 		def codeMeli = params.code
-		println codeMeli
 
 		try {
 
@@ -145,7 +141,7 @@ class HomeController {
 				redirect_uri: redirectUri]
 
 			def r = restApiService.post('/oauth/token', null, postBody)
-
+			
 			session.token = r.access_token
 			session.refreshToken = r.refresh_token
 			session.meliCustId = r.user_id
@@ -155,11 +151,12 @@ class HomeController {
 
 		catch (Exception e) {
 			println e
-			error = "There was an error in authentication - {e}"
+			error = "There was an error in authentication - {$e}"
 		}
 	}
 
 	def oauth() {
+		println "PASO 4"
 		redirect(url: "https://auth.mercadolibre.com.ar/authorization?response_type=code&client_id="+clientId+"&redirect_uri="+redirectUri)
 	}
 

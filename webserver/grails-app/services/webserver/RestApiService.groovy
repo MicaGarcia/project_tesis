@@ -15,7 +15,6 @@ class RestApiService {
 
 		def http = new HTTPBuilder(grailsApp.config.grails.apiURL)
 		def json
-		println url
 
 		try {
 			json = http.get( path : url, query : parameters)
@@ -32,24 +31,21 @@ class RestApiService {
 	}
 
 	def post(url, parameters, body) {
-		println url
 
 		def http = new HTTPBuilder(grailsApp.config.grails.apiURL)
 		def jsonResponse
 		
 		try {
 			
-			http.post( path: url, query : parameters, body: body,
-			requestContentType: URLENC ) 
-			
-			{ resp, json ->
+			http.post( path: url,query: parameters,  body: body,
+			requestContentType: URLENC ){ resp, json ->
 
 				//assert resp.statusLine.statusCode == 200
 				jsonResponse = json
 			}
 		}
 		catch (Exception e){
-			println e
+			println "POST REQUEST "+e.message
 		}
 		println "JSON RESPONSE"+jsonResponse
 		return jsonResponse
@@ -88,6 +84,6 @@ class RestApiService {
 		}
 		println "JSON RESPONSE" + jsonResponse
 		return jsonResponse
-	}
+	}	
 
 }

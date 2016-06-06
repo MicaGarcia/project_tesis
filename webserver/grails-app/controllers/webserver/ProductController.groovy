@@ -76,11 +76,11 @@ class ProductController {
 			println params.id
 
 			if (result) {
-				flash.message = "Integrator updated"
+				flash.message = ""
 				redirect (action: "details", id: params.id)
 			}
 			else {
-				flash.message = "Error updating integrator_id ${params.id}"
+				flash.message = ""
 				redirect (action: "edit", id: params.id)
 			}
 		}

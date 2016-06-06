@@ -64,6 +64,7 @@ form,button {
 					<th>Shipping</th>
 					<th>Status</th>
 					<th>Action</th>
+<%--					<th></th>--%>
 
 				</tr>
 			</thead>
@@ -113,6 +114,40 @@ form,button {
 						</g:form>
 
 
+						<g:form controller="publisher" action="deleteItem">
+						<g:hiddenField name="productId" value="${product.id}" />
+					<g:if test="${product.items.status.find{true} == 'closed'}">
+      						<td><g:submitButton name="save" value="Delete ML" /></td>
+					</g:if>					
+				</g:form>
+				
+				<g:if test="${product.items.status.find{true} == 'not_yet_active'}">
+      						<td></td>
+					</g:if>					
+				
+				<g:form controller="publisher" action="changeStatus">
+				<g:hiddenField name="productId" value="${product.id}" />
+				
+					<g:if test="${product.items.status.find{true} == 'active'}">
+      						<td><g:submitButton name="save" value="Pause" /></td>
+					</g:if>
+					<g:if test="${product.items.status.find{true} == 'paused'}">
+      						<td><g:submitButton name="save" value="Reactive" /></td>
+					</g:if>
+				</g:form>
+				
+				<g:form controller="publisher" action="closeItem">
+						<g:hiddenField name="productId" value="${product.id}" />
+					<g:if test="${product.items.status.find{true} == 'active' || product.items.status.find{true} == 'paused'}">
+      						<td><g:submitButton name="save" value="Close" /></td>
+					</g:if>					
+				</g:form>
+				<g:form controller="publisher" action="relist">
+						<g:hiddenField name="productId" value="${product.id}" />
+					<g:if test="${product.items.status.find{true} == 'closed'}">
+      						<td><g:submitButton name="save" value="Relist" /></td>
+					</g:if>					
+				</g:form>
 					</tr>
 				</g:each>
 			</tbody>

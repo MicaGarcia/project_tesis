@@ -60,19 +60,24 @@ class QuestionService {
 
 	def findQuestion(question) {
 
+		try {
 		Questions ques = Questions.findByQuestionId(question.id)
 
 		/*if question not exists, create in DB*/
 		if (!ques) {
 
 			Items item = Items.findByItemId(question.item_id)
-			Questions q = new Questions(questionId: question.id, item: item, status: question.status, date: question.date_created, text: question.text)
+			Questions q = new Questions(questionId: question.id, item: item.id, status: question.status, date: question.date_created, text: question.text)
 			q.save(flush:true, failOnError:true)
 		}
 		/*if exists, update it*/
 		else {
 			ques.status = question.status
 			ques.save()
+		}
+		}
+		catch(e) {
+			println "Exception trying to save new question - {$e}"
 		}
 	}
 }

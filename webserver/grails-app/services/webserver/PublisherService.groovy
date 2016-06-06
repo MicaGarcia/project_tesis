@@ -10,15 +10,13 @@ class PublisherService {
 
 	def defineAction(meliUser, prod, listing) {
 
-		println "prod"
-
 		if (!prod.items.itemId) {
 			publishItem(meliUser, prod, listing)
 		}
 
-		else if(prod.items.status == "active" || prod.items.status == "paused") {
+		else if(prod.items.status.first() == "active" || prod.items.status.first() == "paused") {
 
-			modifyItem(meliUser, prod, listing)
+			modifyItem(meliUser, prod)
 		}
 	}
 
@@ -37,6 +35,7 @@ class PublisherService {
 			}
 
 			def shipping = createShipping(modeShipping)
+			println "SHIPPING FOR ITEM "+shipping
 
 			def images = [
 				["source" : prod.image1],
@@ -65,6 +64,8 @@ class PublisherService {
 				"seller_custom_field":prod.sku
 			]
 
+			println bodyContent as JSON
+
 			try {
 				def url = "/items"
 				def result = restApiService.post(url , [access_token:meliUser.token], bodyContent)
@@ -76,11 +77,12 @@ class PublisherService {
 		}
 	}
 
-	def modifyItem(meliUser, prod, listing) {
+	def modifyItem(meliUser, prod) {
 
 		try {
 
-			def item = RestApiService.getData("/items/"+prod.items.itemId)
+			def bodyContent
+			def item = restApiService.get("/items/"+prod.items.first().itemId, [access_token:meliUser.token])
 
 			def images = [
 				["source" : prod.image1],
@@ -109,10 +111,9 @@ class PublisherService {
 				]
 			}
 
-		def parameters = [access_token : meliUser.token]
-		def url = "/items/"+item.id
-		def result = restApiService.put(url, parameters, bodyContent)
-
+			def parameters = [access_token : meliUser.token]
+			def url = "/items/"+item.id
+			def result = restApiService.put(url, parameters, bodyContent)
 		}
 		catch(e) {
 			println e
@@ -121,6 +122,7 @@ class PublisherService {
 
 	def createShipping(modeShipping) {
 
+		println "MODE SHIPPING TO CHECK "+modeShipping
 		def shipping
 
 		switch (modeShipping) {
@@ -180,8 +182,7 @@ class PublisherService {
 
 		if (result) {
 
-			result.available.each()
-			{
+			result.available.each() {
 				availableListings.add(it.id)
 			}
 		}
@@ -189,10 +190,10 @@ class PublisherService {
 	}
 
 	def createItem(meliUser, item) {
-
 		try {
 			Products p = Products.findBySku(item.seller_custom_field)
 			if (p) {
+				println "New Item - {$p}"
 				Items i = new Items(categoryId: item.category_id, itemId: item.id, listingType: item.listing_type_id, meliUser:meliUser, permalink: item.permalink, product:p, shipping: item.shipping.mode, status: item.status)
 				i.save(flush:true, failOnError:true)
 			}
@@ -217,6 +218,7 @@ class PublisherService {
 
 			/*if item not exists, create it*/
 			if (!item) {
+				println meliItem
 				createItem(meliUser, meliItem)
 			}
 			/*if item exists, update it*/
@@ -227,5 +229,128 @@ class PublisherService {
 				item.save()
 			}
 		}
+	}
+
+	def changeStatus(meliUser, prod) {
+
+		def bodyContent
+		try {
+
+			Items item = Items.findByItemId(prod.items.first().itemId)
+			println "item change status "+item
+			
+			if (item) {
+				if(item.status == "active") {
+					bodyContent = [
+						"status": "paused"
+					]
+				}
+				else if(item.status == "paused") {
+					bodyContent = [
+						"status": "active"
+					]
+				}
+
+				def parameters = [access_token : meliUser.token]
+				def url = "/items/"+item.itemId
+				def result = restApiService.put(url, parameters, bodyContent)
+				println result
+
+				item.status = result.status
+				item.save()
+			}
+		}
+		catch(Exception e) {
+			println "error trying to change status item - {$e}"
+		}		
+	}
+	
+	def deleteItem(meliUser, prod) {
+		
+		def bodyContent
+		try {
+
+			Items item = Items.findByItemId(prod.items.first().itemId)
+			println "item change status "+item
+			
+			if (item) {
+
+					bodyContent = [
+						"deleted":"true"
+					]
+					
+				def parameters = [access_token : meliUser.token]
+				def url = "/items/"+item.itemId
+				def result = restApiService.put(url, parameters, bodyContent)
+				println result
+
+				item.status = result.status
+				item.save()
+			}
+		}
+		catch(Exception e) {
+			println "error trying to change status item - {$e}"
+		}		
+	}
+	
+	def closeItem(meliUser, prod) {
+		
+		def bodyContent
+		try {
+
+			Items item = Items.findByItemId(prod.items.first().itemId)
+			println "item change status "+item
+			
+			if (item.status == "active" || item.status == "paused") {
+				
+				bodyContent = [					
+					"status": "closed"
+					]
+					
+				def parameters = [access_token : meliUser.token]
+				def url = "/items/"+item.itemId
+				def result = restApiService.put(url, parameters, bodyContent)
+				println result
+
+				item.status = result.status
+				item.save()
+			}
+		}
+		catch(Exception e) {
+			println "error trying to change status item - {$e}"
+		}
+	}
+	
+	def relist(meliUser, prod) {
+		
+		def bodyContent
+		try {
+
+			Items item = Items.findByItemId(prod.items.first().itemId)
+			println "item change status "+item
+			
+			if (item.status == "closed" && item.product.stock > 0 ) {
+				
+				bodyContent = [
+					 "price": prod.price.toFloat(),
+					 "quantity": prod.stock,
+					 "listing_type_id": prod.listingType
+					]
+					
+				def parameters = [access_token : meliUser.token]
+				def url = "/items/"+item.itemId
+				def result = restApiService.put(url, parameters, bodyContent)
+				println result
+
+				item.itemId = result.id
+				item.status = result.status
+				item.permalink = result.permalink
+				item.save()
+			}
+		}
+		catch(Exception e) {
+			println "error trying to change status item - {$e}"
+		}
+		
 	}
 }

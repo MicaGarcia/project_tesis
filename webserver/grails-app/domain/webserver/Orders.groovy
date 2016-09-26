@@ -9,7 +9,8 @@ class Orders {
 	Double totalAmount
 	String date_created
 	String date_closed
-	Buyers buyer	
+	//Buyers buyer	
+	//String buyer_id
 	String payment
 	String shipping
 	String buyerFeed

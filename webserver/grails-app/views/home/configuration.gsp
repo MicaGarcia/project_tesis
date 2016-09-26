@@ -91,6 +91,12 @@ User:${session.user.username}
 </g:form>
 </g:if>
 
+<g:if test="${userLogged}">
+<g:form controller= "metrics" action="index">
+    <button type="submit">Metrics</button>
+</g:form>
+</g:if>
+
 
 <form action="oauth">
 <input class="save" type="submit" value="Get Authentication">

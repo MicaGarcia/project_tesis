@@ -38,6 +38,9 @@ form, button {
 <g:form controller= "question" action="list">
     <button type="submit">My Questions</button>
 </g:form>
+<g:form controller= "order" action="updateList">
+    <button type="submit">Refresh Orders</button>
+</g:form>
 
 
 </div>
@@ -51,7 +54,7 @@ form, button {
 					
 					<g:sortableColumn property="orderId" title="Order" />
 					<g:sortableColumn property="item.itemId" title="Item ID" />
-					<g:sortableColumn property="item.product.titulo" title="Item Title" />
+<%--					<g:sortableColumn property="item.product.titulo" title="Item Title" />--%>
 					<g:sortableColumn property="quantity" title="Quantity" />
 					<g:sortableColumn property="totalAmount" title="Total Amount" />
 					<g:sortableColumn property="buyer" title="Buyer" />
@@ -70,10 +73,11 @@ form, button {
 			<g:hiddenField name="orderId" value="${order.id}" />
 					<td>${fieldValue(bean: order, field: "orderId")}</td>
 					<td>${fieldValue(bean: order, field: "itemId")}</td>
-					<td>${fieldValue(bean: order, field: "itemTitle")}</td>
+<%--					<td>${fieldValue(bean: order, field: "itemTitle")}</td>--%>
 					<td>${fieldValue(bean: order, field: "quantity")}</td>
 					<td>${fieldValue(bean: order, field: "totalAmount")}</td>
-					<td>${fieldValue(bean: order, field: "buyer")}</td>
+<%--					<td>${fieldValue(bean: order, field: "buyer")}</td>--%>
+					<td></td>
 					<td>${fieldValue(bean: order, field: "payment")}</td>
 					<td>${fieldValue(bean: order, field: "shipping")}</td>
 					<td>${fieldValue(bean: order, field: "status")}</td>

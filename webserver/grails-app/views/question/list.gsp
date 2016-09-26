@@ -38,6 +38,9 @@ form, button {
 <g:form controller= "order" action="list">
     <button type="submit">My Orders</button>
 </g:form>
+<g:form controller= "question" action="updateList">
+    <button type="submit">Refresh Questions</button>
+</g:form>
 
 </div>
 	<br>

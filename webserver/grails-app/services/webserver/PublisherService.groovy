@@ -204,14 +204,17 @@ class PublisherService {
 	}
 
 	def updateItems(meliUser) {
+		println meliUser.token
 
+		try {
 		/* get all items by seller*/		
 		def parameters = [access_token:meliUser.token]
 		def listItems = restApiService.get("/users/"+meliUser.custId+"/items/search", parameters)
-
+		println listItems
 		listItems.results.each {
 
 			def meliItem = restApiService.get("/items/"+it, parameters)
+			println meliItem
 
 			/*check if item is in DB*/
 			Items item = Items.findByItemId(it)
@@ -228,6 +231,10 @@ class PublisherService {
 				item.listingType = meliItem.listing_type_id
 				item.save()
 			}
+		}
+		}
+		catch(Exception e) {
+			println "Exception trying to update items - {$e}"
 		}
 	}
 
@@ -334,12 +341,12 @@ class PublisherService {
 				bodyContent = [
 					 "price": prod.price.toFloat(),
 					 "quantity": prod.stock,
-					 "listing_type_id": prod.listingType
+					 "listing_type_id": item.listingType
 					]
 					
 				def parameters = [access_token : meliUser.token]
-				def url = "/items/"+item.itemId
-				def result = restApiService.put(url, parameters, bodyContent)
+				def url = "/items/"+item.itemId+"/relist"
+				def result = restApiService.post(url, parameters, bodyContent)
 				println result
 
 				item.itemId = result.id

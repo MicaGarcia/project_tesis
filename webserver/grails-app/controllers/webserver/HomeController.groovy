@@ -156,7 +156,6 @@ class HomeController {
 	}
 
 	def oauth() {
-		println "PASO 4"
 		redirect(url: "https://auth.mercadolibre.com.ar/authorization?response_type=code&client_id="+clientId+"&redirect_uri="+redirectUri)
 	}
 

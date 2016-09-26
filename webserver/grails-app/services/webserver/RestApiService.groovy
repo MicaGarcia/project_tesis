@@ -24,7 +24,7 @@ class RestApiService {
 			//asserts!!
 		}
 		catch (e) {
-			println "Exception GET "+e.message()
+			println "Exception GET "+e.message
 		}
 		return json
 
@@ -54,30 +54,30 @@ class RestApiService {
 		return jsonResponse
 	}
 
-	def put(url, parameters, body) {
+	def put(url, parameters, reqBody) {
 
 		def method = Method.PUT
 		def http = new HTTPBuilder(grailsApp.config.grails.apiURL)
 		def jsonResponse
-		println url
-		println parameters
-		println "${body as grails.converters.JSON}"
-		try {
-			http.handler.failure = { resp ->
-				println "Unexpected failure: ${resp.status}"
-				println "Unexpected failure: ${resp.data}"
-				println "${resp.dump()}"
-			}
 
-			http.request(method ){ 
+		try {
+			http.request(method, JSON ){ req ->
 				uri.path = url 
 				uri.query = parameters  
 				requestContentType = JSON			
-				body = body
+				body = reqBody
 				
-				response.success = { resp ->
+				response.success = { resp, json ->
 					println "PUT response status: ${resp.statusLine}"
 					//assert resp.statusLine.statusCode == 201
+					
+				jsonResponse = json
+				}
+				
+				response.failure = { resp, json ->
+					println "Unexpected failure: ${resp.status}"
+					println "Unexpected failure: ${resp.data}"
+					println "${json}"
 				}
 				//println "RESP ${resp}"
 				//assert resp.statusLine.statusCode == 200

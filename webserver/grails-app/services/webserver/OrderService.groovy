@@ -8,11 +8,24 @@ class OrderService {
 	def restApiService
 
 	def updateOrders(meliUser) {
-		/* get all orders by seller*/
-		def parameters = [seller_id:meliUser.custId, access_token:meliUser.token]
-		def listOrders = restApiService.get("/orders/search", parameters)
 
-		//listOrders.each { findOrder(it) }
+		def listOrders
+		try {
+		/* get all orders by seller*/
+		def parameters = [seller: meliUser.custId, access_token:meliUser.token]
+		listOrders = restApiService.get("/orders/search", parameters)
+
+		listOrders.results.each { 
+			println it.id
+			findOrder(it) 
+			}
+		}
+		catch (Exception e){
+			println "Error trying to update orders list - ${e}"
+		}
+		
+		def res = getOrders(meliUser)
+		return res
 	}
 
 	def getOrders(meliUser) {
@@ -22,6 +35,8 @@ class OrderService {
 			def listAllOrders = Orders.getAll()
 
 			listAllOrders.each() {
+				
+
 				Items item = Items.findByItemId(it.itemId)
 				if (item!= null && item.meliUser == meliUser) {
 					listOrders.add(it)
@@ -35,20 +50,27 @@ class OrderService {
 	}
 
 	def findOrder(meliOrder) {
+		
+		try {
 
 		Orders order = Orders.findByOrderId(meliOrder.id)
 		if (!order) {
-			def shippingOrder = ""
-			def paymentOrder = ""
+			
+			def shippingOrder = "no shipping"
+			def paymentOrder = "no payment"
 
-			if(result.shipping.status) {
+			if(meliOrder.shipping.status) {
 				shippingOrder = meliOrder.shipping.status
 			}
-			if(result.payments.status) {
+			if(meliOrder.payments.status) {
 				paymentOrder = meliOrder.payments.status.toString()
 			}
 
-			Orders o = new Orders(itemId: meliOrder.order_items.item.id[0], itemTitle: meliOrder.order_items.item.title[0], orderId: meliOrder.id, status: meliOrder.status, quantity: meliOrder.order_items.quantity[0], totalAmount: meliOrder.total_amount, date_created: meliOrder.date_created, date_closed: meliOrder.date_closed, buyer: meliOrder.buyer.id, shipping: shippingOrder, payment: paymentOrder,  buyerFeed: meliOrder.feedback.purchase.toString(), sellerFeed: meliOrder.feedback.sale.toString())
+			
+			println "PAYMENT "+meliOrder.payment
+			println "PAYMENT "+paymentOrder
+
+			Orders o = new Orders(itemId: meliOrder.order_items.item.id[0], itemTitle: meliOrder.order_items.item.title[0], orderId: meliOrder.id, status: meliOrder.status, quantity: meliOrder.order_items.quantity[0], totalAmount: meliOrder.total_amount, date_created: meliOrder.date_created, date_closed: meliOrder.date_closed, /*buyer_id: meliOrder.buyer.id,*/ shipping: shippingOrder, payment: paymentOrder,  buyerFeed: meliOrder.feedback.purchase.toString(), sellerFeed: meliOrder.feedback.sale.toString())
 			o.save(flush:true, failOnError:true)
 
 			/*update stock*/
@@ -56,6 +78,12 @@ class OrderService {
 			def stock = item.product.stock - o.quantity
 			item.product.stock = stock
 			item.save()
+			
+			
+			if (!item.save()) {
+				item.errors.allErrors.each { println it }
+				result = false
+			}
 		}
 
 		else {
@@ -71,7 +99,7 @@ class OrderService {
 			order.date_closed = meliOrder.date_closed
 
 
-			if (meliOrder.feedback.purchase.fulfilled) {
+			if (meliOrder.feedback.purchase?.fulfilled) {
 				order.buyerFeed = meliOrder.feedback.purchase.fulfilled.toString()
 			}
 			else {
@@ -79,13 +107,17 @@ class OrderService {
 			}
 
 
-			if (meliOrder.feedback.sale.fulfilled) {
+			if (meliOrder.feedback.sale?.fulfilled) {
 				order.sellerFeed = meliOrder.feedback.sale.fulfilled.toString()
 			}
 			else {
 				order.sellerFeed = "null"
 			}
 			order.save()
+		}
+		}
+		catch(Exception e) {
+			println "Error trying to save order - ${e}"
 		}
 	}
 }
